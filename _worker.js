@@ -10,7 +10,7 @@ export default {
         
         // 環境変数からパスワードとURLを取得
         const CORRECT_PASSWORD = env.PASSWORD || "your_password_here";
-        const REDIRECT_URL = env.REDIRECT_URL || "https://youtube.com/live/-xFoTbljq2A?feature=share";
+        const REDIRECT_URL = env.REDIRECT_URL || "https://youtube.com/live...";
         
         // パスワード検証
         if (password === CORRECT_PASSWORD) {
