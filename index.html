@@ -79,6 +79,11 @@
         button:active {
             transform: translateY(0);
         }
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
         .error {
             color: #e74c3c;
             font-size: 14px;
@@ -94,6 +99,16 @@
             font-size: 48px;
             margin-bottom: 20px;
         }
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 10px;
+            color: #667eea;
+            font-size: 14px;
+        }
+        .loading.show {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -107,38 +122,60 @@
                 <label for="password">パスワード</label>
                 <input type="password" id="password" name="password" placeholder="パスワードを入力" required autocomplete="off">
             </div>
-            <button type="submit">配信を視聴する</button>
+            <button type="submit" id="submitBtn">配信を視聴する</button>
+            <p class="loading" id="loading">認証中...</p>
             <p class="error" id="error">パスワードが正しくありません</p>
         </form>
     </div>
 
     <script>
-        const correctPassword = "Kw0527322351"; // ここにパスワードを設定してください
-        const redirectUrl = "";
-        
-        document.getElementById('passwordForm').addEventListener('submit', function(e) {
+        document.getElementById('passwordForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
             const inputPassword = document.getElementById('password').value;
             const errorElement = document.getElementById('error');
+            const loadingElement = document.getElementById('loading');
+            const submitBtn = document.getElementById('submitBtn');
             
-            if (inputPassword === correctPassword) {
-                // パスワードが正しい場合、リダイレクト
-                window.location.replace(redirectUrl);
-            } else {
-                // パスワードが間違っている場合、エラー表示
-                errorElement.classList.add('show');
-                document.getElementById('password').value = '';
-                document.getElementById('password').focus();
+            // ローディング表示
+            submitBtn.disabled = true;
+            loadingElement.classList.add('show');
+            errorElement.classList.remove('show');
+            
+            try {
+                // サーバーに認証リクエスト
+                const response = await fetch('/api/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ password: inputPassword })
+                });
                 
-                // エラーメッセージを3秒後に非表示
-                setTimeout(function() {
-                    errorElement.classList.remove('show');
-                }, 3000);
+                const data = await response.json();
+                
+                if (data.success) {
+                    // 認証成功、リダイレクト
+                    window.location.href = data.redirectUrl;
+                } else {
+                    // 認証失敗
+                    errorElement.classList.add('show');
+                    document.getElementById('password').value = '';
+                    document.getElementById('password').focus();
+                    
+                    setTimeout(function() {
+                        errorElement.classList.remove('show');
+                    }, 3000);
+                }
+            } catch (error) {
+                errorElement.textContent = 'エラーが発生しました。もう一度お試しください。';
+                errorElement.classList.add('show');
+            } finally {
+                loadingElement.classList.remove('show');
+                submitBtn.disabled = false;
             }
         });
         
-        // パスワード入力中はエラーを非表示
         document.getElementById('password').addEventListener('input', function() {
             document.getElementById('error').classList.remove('show');
         });
